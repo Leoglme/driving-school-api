@@ -21,7 +21,7 @@ def create_app():
     db.init_app(app)
 
     # Import models
-    from .models import User, Role, Meet
+    from .models import User, Role, Meet, Token, Time
 
     # Import routes
     from .routes import user, auth, user, meet
@@ -37,3 +37,4 @@ def create_database(app):
     if not path.exists('website/' + DB_NAME):
         db.create_all(app=app)
         print('Created Database!')
+
