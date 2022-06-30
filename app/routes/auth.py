@@ -15,10 +15,10 @@ from flask_jwt_extended import create_access_token
 @router.route('/login', methods=['POST'])
 def login():
     auth = request.get_json()
-    if not auth or not auth.get('first_name') or not auth.get('password'):
+    if not auth or not auth.get('email') or not auth.get('password'):
         return make_response('oupla!', 401, {'WWW-Authenticate': 'Basic-realm= "Login required!"'})
 
-    user = User.query.filter_by(first_name=auth['first_name']).first()
+    user = User.query.filter_by(email=auth['email']).first()
     if not user:
         return make_response('Could not verify user, Please signup!', 401,
                              {'WWW-Authenticate': 'Basic-realm= "No user found!"'})
