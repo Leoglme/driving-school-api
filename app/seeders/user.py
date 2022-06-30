@@ -27,10 +27,10 @@ def add_users(count):
         password = generate_password_hash("password")
         first_name = random_char()
         last_name = random_char()
-        role_id = random.randint(1, 3)
+        role = random.randint(1, 3)
 
         with app.app_context():
-            user = User(email=email, password=password, first_name=first_name, last_name=last_name, role_id=role_id)
+            user = User(email=email, password=password, first_name=first_name, last_name=last_name, role=role)
             print(email)
             db.session.add(user)
             db.session.commit()

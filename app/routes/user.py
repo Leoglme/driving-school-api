@@ -3,8 +3,6 @@ from flask import request
 from .. import db
 from ..models.User import User
 from flask import jsonify
-from werkzeug.security import generate_password_hash
-
 
 # Create user
 @router.route('/user', methods=['POST'])
@@ -13,8 +11,8 @@ def store_user():
     email = payload['email']
     first_name = payload['first_name']
     last_name = payload['last_name']
-    role_id = payload['role_id']
-    user = User(email=email, first_name=first_name, last_name=last_name, role_id=role_id)
+    role = payload['role']
+    user = User(email=email, first_name=first_name, last_name=last_name, role=role)
     User.set_password(user, payload['password'])
     db.session.add(user)
     db.session.commit()

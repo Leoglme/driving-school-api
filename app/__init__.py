@@ -2,6 +2,7 @@ from flask import Flask
 from .routes.index import router
 from flask_sqlalchemy import SQLAlchemy
 from os import path
+from flask_cors import CORS
 
 # Init the database
 db = SQLAlchemy()
@@ -10,6 +11,7 @@ DB_NAME = "driving-school.db"
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     # App configs
     app.config['SECRET_KEY'] = 'lorem ipsum'
