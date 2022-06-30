@@ -14,6 +14,7 @@ class User(db.Model):
     last_name = db.Column(db.String(150))
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     role = db.Column(db.Integer)
+    avatar = db.Column(db.String(255))
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
