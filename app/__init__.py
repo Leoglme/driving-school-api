@@ -1,4 +1,5 @@
 from flask import Flask
+
 from .routes.index import router
 from flask_sqlalchemy import SQLAlchemy
 from os import path
@@ -20,10 +21,16 @@ def create_app():
     # Disable create db deprecated warning
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    app.config['MAIL_SERVER'] = 'localhost'
+    app.config['MAIL_PORT'] = 1025
+    app.config['MAIL_USE_SSL'] = False
+    app.config['MAIL_USERNAME'] = ""
+    app.config['MAIL_PASSWORD'] = ""
+
     db.init_app(app)
 
     # Import models
-    from .models import User, Role, Meet
+    from .models import User, Role, Meet, Token, Time
 
     # Import routes
     from .routes import user, auth, user, meet
@@ -39,3 +46,4 @@ def create_database(app):
     if not path.exists('website/' + DB_NAME):
         db.create_all(app=app)
         print('Created Database!')
+
