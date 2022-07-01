@@ -3,6 +3,8 @@ from flask import request
 from .. import db
 from ..models.User import User
 from flask import jsonify
+from ..enums.role import Role
+
 
 # Create user
 @router.route('/user', methods=['POST'])
@@ -23,6 +25,20 @@ def store_user():
 @router.route('/users', methods=['GET'])
 def index_user():
     users = User.query.all()
+    return jsonify(User.serialize_list(users))
+
+
+# Get all users role Student
+@router.route('/students', methods=['GET'])
+def index_students():
+    users = User.query.filter_by(role=Role.Student)
+    return jsonify(User.serialize_list(users))
+
+
+# Get all users != student
+@router.route('/employee', methods=['GET'])
+def index_employee():
+    users = User.query.filter(User.role != Role.Student).all()
     return jsonify(User.serialize_list(users))
 
 
