@@ -46,6 +46,10 @@ def index_employee():
 @router.route('/user/<int:user_id>', methods=['GET'])
 def show_user(user_id):
     user = User.query.filter_by(id=user_id).first()
+    user.role = {
+        'id': user.role,
+        'name': Role(user.role).name
+    }
     if user:
         return jsonify(User.serialize(user))
     return f"User with id {user_id} doesn't exist"

@@ -33,7 +33,7 @@ def create_app():
     from .models import User, Role, Meet, Token, Time
 
     # Import routes
-    from .routes import user, auth, user, meet
+    from .routes import user, auth, user, meet, role
 
     app.register_blueprint(router)
 
