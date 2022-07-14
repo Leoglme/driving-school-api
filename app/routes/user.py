@@ -31,7 +31,11 @@ def index_user():
 # Get all users role Student
 @router.route('/students', methods=['GET'])
 def index_students():
+    search = request.args.get("search")
     users = User.query.filter_by(role=Role.Student)
+    if search:
+        users = users.filter(User.first_name.contains(search))
+    # users = users.contains(first_name=search)
     return jsonify(User.serialize_list(users))
 
 
