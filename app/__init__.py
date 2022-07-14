@@ -4,7 +4,9 @@ from .routes.index import router
 from flask_sqlalchemy import SQLAlchemy
 from os import path
 from flask_cors import CORS
+from flask_avatars import Avatars
 
+avatars = Avatars()
 # Init the database
 db = SQLAlchemy()
 DB_NAME = "driving-school.db"

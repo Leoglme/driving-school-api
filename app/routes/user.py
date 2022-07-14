@@ -1,6 +1,9 @@
+from sqlalchemy import desc
+
 from .index import router
 from flask import request
 from .. import db
+from .. import avatars
 from ..models.User import User
 from flask import jsonify
 from ..enums.role import Role
@@ -13,8 +16,9 @@ def store_user():
     email = payload['email']
     first_name = payload['first_name']
     last_name = payload['last_name']
-    role = payload['role']
-    user = User(email=email, first_name=first_name, last_name=last_name, role=role)
+    role = payload['role_id']
+    avatar = avatars.robohash(email, size='80')
+    user = User(email=email, first_name=first_name, last_name=last_name, role=role, avatar=avatar)
     User.set_password(user, payload['password'])
     db.session.add(user)
     db.session.commit()
@@ -35,13 +39,19 @@ def index_students():
     users = User.query.filter_by(role=Role.Student)
     if search:
         users = users.filter(User.first_name.contains(search) | User.last_name.contains(search))
+    users = users.order_by(desc(User.created_at))
+
     return jsonify(User.serialize_list(users))
 
 
 # Get all users != student
 @router.route('/employee', methods=['GET'])
 def index_employee():
+    search = request.args.get("search")
     users = User.query.filter(User.role != Role.Student).all()
+    if search:
+        users = users.filter(User.first_name.contains(search) | User.last_name.contains(search))
+    users = users.order_by(desc(User.created_at))
     return jsonify(User.serialize_list(users))
 
 
