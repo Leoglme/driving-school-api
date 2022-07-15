@@ -46,6 +46,12 @@ def index_students():
     else:
         students = students.order_by(desc(User.created_at)).paginate(page=page, per_page=take, error_out=False).items
 
+    for student in students:
+        student.role = {
+            'id': student.role,
+            'name': Role(student.role).name
+        }
+
     return jsonify({'students': User.serialize_list(students), 'count': count})
 
 
@@ -55,16 +61,22 @@ def index_employee():
     search = request.args.get("search")
     page = request.args.get('page', 1, type=int)
     take = request.args.get('take', 10, type=int)
-    employee = User.query.filter(User.role != Role.Student).all()
+    employees = User.query.filter(User.role != Role.Student)
 
-    count = employee.count()
+    count = employees.count()
     if search:
-        employee = employee.filter(User.first_name.contains(search) | User.last_name.contains(search))
-        employee = employee.order_by(desc(User.created_at))
+        employees = employees.filter(User.first_name.contains(search) | User.last_name.contains(search))
+        employees = employees.order_by(desc(User.created_at))
     else:
-        employee = employee.order_by(desc(User.created_at)).paginate(page=page, per_page=take, error_out=False).items
+        employees = employees.order_by(desc(User.created_at)).paginate(page=page, per_page=take, error_out=False).items
 
-    return jsonify({'students': User.serialize_list(employee), 'count': count})
+    for employee in employees:
+        employee.role = {
+            'id': employee.role,
+            'name': Role(employee.role).name
+        }
+
+    return jsonify({'employees': User.serialize_list(employees), 'count': count})
 
 
 # Get user by id
