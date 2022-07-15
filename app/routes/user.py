@@ -36,23 +36,35 @@ def index_user():
 @router.route('/students', methods=['GET'])
 def index_students():
     search = request.args.get("search")
-    users = User.query.filter_by(role=Role.Student)
+    page = request.args.get('page', 1, type=int)
+    take = request.args.get('take', 10, type=int)
+    students = User.query.filter_by(role=Role.Student)
+    count = students.count()
     if search:
-        users = users.filter(User.first_name.contains(search) | User.last_name.contains(search))
-    users = users.order_by(desc(User.created_at))
+        students = students.filter(User.first_name.contains(search) | User.last_name.contains(search))
+        students = students.order_by(desc(User.created_at))
+    else:
+        students = students.order_by(desc(User.created_at)).paginate(page=page, per_page=take, error_out=False).items
 
-    return jsonify(User.serialize_list(users))
+    return jsonify({'students': User.serialize_list(students), 'count': count})
 
 
 # Get all users != student
 @router.route('/employee', methods=['GET'])
 def index_employee():
     search = request.args.get("search")
-    users = User.query.filter(User.role != Role.Student).all()
+    page = request.args.get('page', 1, type=int)
+    take = request.args.get('take', 10, type=int)
+    employee = User.query.filter(User.role != Role.Student).all()
+
+    count = employee.count()
     if search:
-        users = users.filter(User.first_name.contains(search) | User.last_name.contains(search))
-    users = users.order_by(desc(User.created_at))
-    return jsonify(User.serialize_list(users))
+        employee = employee.filter(User.first_name.contains(search) | User.last_name.contains(search))
+        employee = employee.order_by(desc(User.created_at))
+    else:
+        employee = employee.order_by(desc(User.created_at)).paginate(page=page, per_page=take, error_out=False).items
+
+    return jsonify({'students': User.serialize_list(employee), 'count': count})
 
 
 # Get user by id
@@ -77,7 +89,7 @@ def update_user(user_id):
         user.email = payload['email']
         user.first_name = payload['first_name']
         user.last_name = payload['last_name']
-        user.role_id = payload['role_id']
+        user.role = payload['role_id']
         db.session.commit()
         return 'User Updated'
     return f"User with id {user_id} doesn't exist"
