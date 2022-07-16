@@ -31,7 +31,7 @@ def add_users(count):
             password = generate_password_hash("password")
             first_name = fake.first_name()
             last_name = fake.last_name()
-            role = random.randint(1, 3)
+            role = random.randint(1, 4)
             avatar = avatars.robohash(email, size='80')
 
             with app.app_context():

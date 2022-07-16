@@ -1,13 +1,15 @@
 from sqlalchemy import desc
-
+from flask_mail import Mail, Message
 from .index import router
-from flask import request
+from flask import request, render_template
 from .. import db
 from .. import avatars
 from ..middleware.auth_middleware import token_required
 from ..models.User import User
 from flask import jsonify
 from ..enums.role import Role
+
+mail = Mail()
 
 
 # Create user
@@ -17,13 +19,21 @@ def store_user(current_user):
     payload = request.get_json()
     email = payload['email']
     first_name = payload['first_name']
+    password = payload['password']
     last_name = payload['last_name']
     role = payload['role_id']
     avatar = avatars.robohash(email, size='80')
     user = User(email=email, first_name=first_name, last_name=last_name, role=role, avatar=avatar)
-    User.set_password(user, payload['password'])
+    User.set_password(user, password)
     db.session.add(user)
     db.session.commit()
+    url = "http://localhost:3000/login"
+
+    msg = Message('Votre compte driving school à été créer', sender='no-reply@driving-school.fr',
+                  recipients=[email])
+    html = render_template('welcome.html', url=url, password=password)
+    msg.html = html
+    mail.send(msg)
     return 'User created', 201
 
 
