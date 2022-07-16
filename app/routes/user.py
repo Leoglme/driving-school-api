@@ -58,15 +58,16 @@ def index_students():
 # Get all users != student
 @router.route('/employee', methods=['GET'])
 def index_employee():
-    search = request.args.get("search")
+    search = request.args.get('search', "", type=str)
     page = request.args.get('page', 1, type=int)
     take = request.args.get('take', 10, type=int)
     employees = User.query.filter(User.role != Role.Student)
 
     count = employees.count()
+
     if search:
         employees = employees.filter(User.first_name.contains(search) | User.last_name.contains(search))
-        employees = employees.order_by(desc(User.created_at))
+        employees = employees.order_by(desc(User.created_at)).all()
     else:
         employees = employees.order_by(desc(User.created_at)).paginate(page=page, per_page=take, error_out=False).items
 
