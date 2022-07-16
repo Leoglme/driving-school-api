@@ -5,6 +5,4 @@ router = Blueprint('router', __name__)
 
 @router.route("/", methods=['GET'])
 def home():
-    return 'home'
-
-
+    return {'success': True}

@@ -1,6 +1,7 @@
 from .index import router
 from flask import request
 from .. import db
+from ..middleware.auth_middleware import token_required
 from ..models.Meet import Meet
 from flask import jsonify
 from datetime import datetime
@@ -8,7 +9,8 @@ from datetime import datetime
 
 # Create meet
 @router.route('/meet', methods=['POST'])
-def store_meet():
+@token_required
+def store_meet(current_user):
     payload = request.get_json()
     name = payload['name']
     date = datetime.fromisoformat(payload['date'])
@@ -23,14 +25,16 @@ def store_meet():
 
 # Get all meets
 @router.route('/meets', methods=['GET'])
-def index_meet():
+@token_required
+def index_meet(current_user):
     meets = Meet.query.all()
     return jsonify(Meet.serialize_list(meets))
 
 
 # Get meet by id
 @router.route('/meet/<int:meet_id>', methods=['GET'])
-def show_meet(meet_id):
+@token_required
+def show_meet(current_user, meet_id):
     meet = Meet.query.filter_by(id=meet_id).first()
     if meet:
         return jsonify(Meet.serialize(meet))
@@ -39,7 +43,8 @@ def show_meet(meet_id):
 
 # Update meet
 @router.route('/meet/<int:meet_id>', methods=['PUT'])
-def update_meet(meet_id):
+@token_required
+def update_meet(current_user, meet_id):
     meet = Meet.query.filter_by(id=meet_id).first()
     if meet:
         payload = request.get_json()
@@ -55,7 +60,8 @@ def update_meet(meet_id):
 
 # Delete meet
 @router.route('/meet/<int:meet_id>', methods=['DELETE'])
-def destroy_meet(meet_id):
+@token_required
+def destroy_meet(current_user, meet_id):
     meet = Meet.query.filter_by(id=meet_id).first()
     if meet:
         db.session.delete(meet)

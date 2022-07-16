@@ -20,15 +20,11 @@ def login():
         return make_response('Champ du formulaire incorrect', 401,
                              {'WWW-Authenticate': 'Basic-realm= "Login required!"'})
 
-    user = User.query.filter_by(email=auth['email']).first()
+    user = User.query.filter_by(email=auth['email']).one()
+
     if not user:
         return make_response('Aucun utilisateur trouvé avec cette adresse email', 401,
                              {'WWW-Authenticate': 'Basic-realm= "No user found!"'})
-
-    print({
-        'password': user.password,
-        'passwordRequest': auth.get('password')
-    })
 
     if check_password_hash(user.password, auth.get('password')):
         # Delete oldest token
@@ -45,7 +41,7 @@ def login():
 
         return make_response(jsonify({
             'token': token.serialize(),
-            'user': user.serialize()
+            'user': User.serialize(user)
         }), 201)
 
     return make_response('Mot de passe incorrect', 403, {'WWW-Authenticate': 'Basic-realm= "Wrong Password!"'})

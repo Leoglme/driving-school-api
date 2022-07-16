@@ -1,6 +1,7 @@
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import db
+from ..enums.role import Role
 from ..services.serializer import Serializer
 
 
@@ -28,5 +29,9 @@ class User(db.Model):
 
     def serialize(self):
         d = Serializer.serialize(self)
+        d['role'] = {
+            'id': d['role'],
+            'name': Role(d['role']).name
+        }
         del d['password']
         return d
