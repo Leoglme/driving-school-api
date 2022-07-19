@@ -41,7 +41,13 @@ def store_user(current_user):
 @router.route('/users', methods=['GET'])
 @token_required
 def index_user(current_user):
-    users = User.query.all()
+    search = request.args.get("search")
+    limit = request.args.get("limit")
+    users = User.query.order_by(desc(User.created_at))
+    if search:
+        users = users.filter(User.first_name.contains(search) | User.last_name.contains(search))
+    if limit:
+        users = users.limit(limit)
     return jsonify(User.serialize_list(users))
 
 
