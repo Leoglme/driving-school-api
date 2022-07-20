@@ -2,6 +2,7 @@ from sqlalchemy import desc
 from .index import router
 from flask import request
 from .. import db
+from ..enums.role import Role
 from ..middleware.auth_middleware import token_required
 from ..models.Meet import Meet
 from flask import jsonify
@@ -12,6 +13,9 @@ from datetime import datetime
 @router.route('/meet', methods=['POST'])
 @token_required
 def store_meet(current_user):
+    # Authorize role
+    if current_user.role == Role.Student:
+        return 'Not allowed to create meet', 401
     payload = request.get_json()
     title = payload['title']
     start = datetime.fromisoformat(payload['start'])
@@ -29,7 +33,12 @@ def store_meet(current_user):
 @router.route('/meets', methods=['GET'])
 @token_required
 def index_meet(current_user):
-    meets = Meet.query.all()
+    user_id = request.args.get('user_id', type=int)
+    meets = Meet.query.order_by(desc(Meet.created_at))
+
+    if user_id:
+        meets = meets.filter(Meet.user == user_id or Meet.chef == user_id)
+
     return jsonify(Meet.serialize_list(meets))
 
 
@@ -46,6 +55,9 @@ def meets_by_user_id(current_user, user_id):
 @router.route('/meet/<int:meet_id>', methods=['PUT'])
 @token_required
 def update_meet(current_user, meet_id):
+    # Authorize role
+    if current_user.role == Role.Student:
+        return 'Not allowed to create meet', 401
     meet = Meet.query.filter_by(id=meet_id).first()
     if meet:
         payload = request.get_json()
@@ -64,6 +76,9 @@ def update_meet(current_user, meet_id):
 @router.route('/meet/<int:meet_id>', methods=['DELETE'])
 @token_required
 def destroy_meet(current_user, meet_id):
+    # Authorize role
+    if current_user.role == Role.Student:
+        return 'Not allowed to create meet', 401
     meet = Meet.query.filter_by(id=meet_id).first()
     if meet:
         db.session.delete(meet)

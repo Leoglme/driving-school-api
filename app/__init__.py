@@ -32,10 +32,10 @@ def create_app():
     db.init_app(app)
 
     # Import models
-    from .models import User, Role, Meet, Token, Time
+    from .models import User, Role, Meet, Token, DrivingTime
 
     # Import routes
-    from .routes import user, auth, user, meet, role
+    from .routes import user, auth, user, meet, role, driving_time
 
     app.register_blueprint(router)
 

@@ -21,7 +21,7 @@ def login():
         return make_response('Champ du formulaire incorrect', 401,
                              {'WWW-Authenticate': 'Basic-realm= "Login required!"'})
 
-    user = User.query.filter_by(email=auth['email']).one()
+    user = User.query.filter_by(email=auth['email']).first()
 
     if not user:
         return make_response('Aucun utilisateur trouvé avec cette adresse email', 401,

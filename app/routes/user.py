@@ -1,7 +1,7 @@
 from sqlalchemy import desc
 from flask_mail import Mail, Message
 from .index import router
-from flask import request, render_template
+from flask import request, render_template, make_response
 from .. import db
 from .. import avatars
 from ..middleware.auth_middleware import token_required
@@ -22,6 +22,17 @@ def store_user(current_user):
     password = payload['password']
     last_name = payload['last_name']
     role = payload['role_id']
+
+    # email already use
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        return make_response('Un utilisateur existe déjà avec cette adresse mail', 409)
+
+    # Authorize role
+    if current_user.role == Role.Student or current_user.role == Role.Instructor or role > current_user.role:
+        return 'Not allowed to create user', 401
+
     avatar = avatars.robohash(email, size='80')
     user = User(email=email, first_name=first_name, last_name=last_name, role=role, avatar=avatar)
     User.set_password(user, password)
@@ -44,6 +55,10 @@ def index_user(current_user):
     search = request.args.get("search")
     limit = request.args.get("limit")
     users = User.query.order_by(desc(User.created_at))
+
+    if current_user.role != Role.Admin:
+        users = users.filter(User.role != Role.Admin)
+
     if search:
         users = users.filter(User.first_name.contains(search) | User.last_name.contains(search))
     if limit:
@@ -70,13 +85,15 @@ def index_students(current_user):
 
 
 # Get all users != student
-@router.route('/employee', methods=['GET'])
+@router.route('/employees', methods=['GET'])
 @token_required
 def index_employee(current_user):
     search = request.args.get('search', "", type=str)
     page = request.args.get('page', 1, type=int)
     take = request.args.get('take', 10, type=int)
     employees = User.query.filter(User.role != Role.Student)
+    if current_user.role != Role.Admin:
+        employees = employees.filter(User.role != Role.Admin)
 
     count = employees.count()
 
@@ -94,6 +111,9 @@ def index_employee(current_user):
 @token_required
 def show_user(current_user, user_id):
     user = User.query.filter_by(id=user_id).first()
+    # Authorize role
+    if current_user.role != Role.Admin and user.role == Role.Admin:
+        return 'Not allowed to show user', 201
     if user:
         return jsonify(User.serialize(user))
     return f"User with id {user_id} doesn't exist"
@@ -106,6 +126,21 @@ def update_user(current_user, user_id):
     user = User.query.filter_by(id=user_id).first()
     if user:
         payload = request.get_json()
+
+        # email already use
+        email_already_exist = User.query.filter_by(email=payload['email']).first()
+
+        if email_already_exist and current_user.id != user.id:
+            return make_response('Un utilisateur existe déjà avec cette adresse mail', 409)
+
+        if current_user.id == user.id and current_user.role < payload['role_id']:
+            return 'Not allowed to update user', 401
+
+        # Authorize role
+        if (current_user.id != user.id) and (
+                current_user.role == Role.Student or current_user.role == Role.Instructor or user.role > current_user.role):
+            return 'Not allowed to update user', 401
+
         user.email = payload['email']
         user.first_name = payload['first_name']
         user.last_name = payload['last_name']
@@ -121,6 +156,10 @@ def update_user(current_user, user_id):
 def destroy_user(current_user, user_id):
     user = User.query.filter_by(id=user_id).first()
     if user:
+        # Authorize role
+        if current_user.id == user.id or current_user.role == Role.Student or current_user.role == Role.Instructor or user.role > current_user.role:
+            return 'Not allowed to delete user', 201
+
         db.session.delete(user)
         db.session.commit()
         return 'User deleted'

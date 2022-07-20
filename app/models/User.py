@@ -1,5 +1,8 @@
+from flask import jsonify
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from .DrivingTime import DrivingTime
 from .. import db
 from ..enums.role import Role
 from ..services.serializer import Serializer
@@ -30,6 +33,12 @@ class User(db.Model):
 
     def serialize(self):
         d = Serializer.serialize(self)
+        driving_time = DrivingTime.query.filter_by(user_id=d['id']).first()
+
+        if driving_time:
+            d['driving_time'] = DrivingTime.serialize(driving_time)
+        else:
+            d['driving_time'] = DrivingTime(hours_done=0, hours_total=0).serialize()
         d['role'] = {
             'id': d['role'],
             'name': Role(d['role']).name
