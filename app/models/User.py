@@ -39,6 +39,8 @@ class User(db.Model):
             d['driving_time'] = DrivingTime.serialize(driving_time)
         else:
             d['driving_time'] = DrivingTime(hours_done=0, hours_total=0).serialize()
+
+        d['driving_time']['hours_remaining'] = d['driving_time']['hours_total'] - d['driving_time']['hours_done']
         d['role'] = {
             'id': d['role'],
             'name': Role(d['role']).name

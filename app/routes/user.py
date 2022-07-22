@@ -1,5 +1,7 @@
 from sqlalchemy import desc
 from flask_mail import Mail, Message
+
+from .driving_time import update_driving_time
 from .index import router
 from flask import request, render_template, make_response
 from .. import db
@@ -18,6 +20,7 @@ mail = Mail()
 def store_user(current_user):
     payload = request.get_json()
     email = payload['email']
+    hours_remaining = payload['hours_remaining']
     first_name = payload['first_name']
     password = payload['password']
     last_name = payload['last_name']
@@ -38,6 +41,10 @@ def store_user(current_user):
     User.set_password(user, password)
     db.session.add(user)
     db.session.commit()
+
+    # Add driving time to user
+    update_driving_time(hours_remaining, user.id)
+
     url = "http://localhost:3000/login"
 
     msg = Message('Votre compte driving school à été créer', sender='no-reply@driving-school.fr',

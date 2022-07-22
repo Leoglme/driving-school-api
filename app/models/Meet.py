@@ -22,6 +22,10 @@ class Meet(db.Model):
 
     def serialize(self):
         d = Serializer.serialize(self)
-        d['user'] = User.serialize(User.query.filter_by(id=d['user']).first())
-        d['chef'] = User.serialize(User.query.filter_by(id=d['chef']).first())
+        user = User.query.filter_by(id=d['user']).first()
+        chef = User.query.filter_by(id=d['chef']).first()
+        if user:
+            d['user'] = User.serialize(user)
+        if user:
+            d['chef'] = User.serialize(chef)
         return d

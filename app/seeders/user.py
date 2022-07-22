@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 
+from flask import jsonify
+
 path_root = Path(__file__).parents[2]
 sys.path.append(str(path_root))
 from app import db, create_app
@@ -14,7 +16,8 @@ avatars = Avatars(app)
 
 from werkzeug.security import generate_password_hash
 from app.models.User import User
-
+from app.models.DrivingTime import DrivingTime
+from app.enums.role import Role
 fake = Faker()
 
 
@@ -31,15 +34,23 @@ def add_users(count):
             password = generate_password_hash("password")
             first_name = fake.first_name()
             last_name = fake.last_name()
-            role = random.randint(1, 4)
+            user_role = random.randint(1, 4)
+            hours_done = random.randint(0, 10)
+            hours_total = random.randint(10, 40)
             avatar = avatars.robohash(email, size='80')
 
             with app.app_context():
-                user = User(email=email, password=password, first_name=first_name, last_name=last_name, role=role,
+                user = User(email=email, password=password, first_name=first_name, last_name=last_name, role=user_role,
                             avatar=avatar)
-                print(email)
                 db.session.add(user)
                 db.session.commit()
+                if user.role == Role.Student:
+                    driving_time = DrivingTime(hours_done=hours_done, hours_total=hours_total, user_id=user.id)
+                    db.session.add(driving_time)
+
+                db.session.commit()
+                print(email)
+
 
         return click.echo('{} users were added successfully to the database.'.format(count))
 
