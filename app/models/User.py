@@ -20,6 +20,7 @@ class User(db.Model):
     role = db.Column(db.Integer)
     avatar = db.Column(db.String(255))
     passwordNeedSet = db.Column(db.Boolean(), default=True)
+    active = db.Column(db.Boolean(), default=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

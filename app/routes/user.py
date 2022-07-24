@@ -8,6 +8,7 @@ from .. import db
 from .. import avatars
 from ..middleware.auth_middleware import token_required
 from ..models.User import User
+from ..models.Meet import Meet
 from flask import jsonify
 from ..enums.role import Role
 
@@ -61,7 +62,7 @@ def store_user(current_user):
 def index_user(current_user):
     search = request.args.get("search")
     limit = request.args.get("limit")
-    users = User.query.order_by(desc(User.created_at))
+    users = User.query.filter(User.active).order_by(desc(User.created_at))
 
     if current_user.role != Role.Admin:
         users = users.filter(User.role != Role.Admin)
@@ -80,7 +81,7 @@ def index_students(current_user):
     search = request.args.get("search")
     page = request.args.get('page', 1, type=int)
     take = request.args.get('take', 10, type=int)
-    students = User.query.filter_by(role=Role.Student)
+    students = User.query.filter_by(role=Role.Student and User.active)
     count = students.count()
     if search:
         students = students.filter(User.first_name.contains(search) | User.last_name.contains(search))
@@ -98,7 +99,7 @@ def index_employee(current_user):
     search = request.args.get('search', "", type=str)
     page = request.args.get('page', 1, type=int)
     take = request.args.get('take', 10, type=int)
-    employees = User.query.filter(User.role != Role.Student)
+    employees = User.query.filter((User.role != Role.Student) & User.active)
     if current_user.role != Role.Admin:
         employees = employees.filter(User.role != Role.Admin)
 
@@ -172,7 +173,7 @@ def destroy_user(current_user, user_id):
         if current_user.id == user.id or current_user.role == Role.Student or current_user.role == Role.Instructor or user.role > current_user.role:
             return 'Non autorisé à supprimer l\'utilisateur', 401
 
-        db.session.delete(user)
+        user.active = False
         db.session.commit()
         return 'User deleted'
     return f"L'utilisateur avec l'identifiant {user_id} n'existe pas"
