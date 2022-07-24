@@ -135,23 +135,28 @@ def update_user(current_user, user_id):
         payload = request.get_json()
 
         # email already use
-        email_already_exist = User.query.filter_by(email=payload['email']).first()
-
-        if email_already_exist and current_user.id != user.id:
-            return make_response('Un utilisateur existe déjà avec cette adresse mail', 409)
+        if user.email != payload['email']:
+            email_already_exist = User.query.filter_by(email=payload['email']).first()
+            if email_already_exist and current_user.id != user.id:
+                return make_response('Un utilisateur existe déjà avec cette adresse mail', 409)
 
         if current_user.id == user.id and current_user.role < payload['role_id']:
             return 'Not allowed to update user', 401
 
         # Authorize role
         if (current_user.id != user.id) and (
-                current_user.role == Role.Student or current_user.role == Role.Instructor or user.role > current_user.role):
+                current_user.role == Role.Student or
+                current_user.role == Role.Instructor or user.role > current_user.role):
             return 'Not allowed to update user', 401
 
         user.email = payload['email']
         user.first_name = payload['first_name']
         user.last_name = payload['last_name']
         user.role = payload['role_id']
+
+        # Add driving time to user
+        update_driving_time(int(payload['hours_remaining']), user.id)
+
         db.session.commit()
         return 'User Updated'
     return f"User with id {user_id} doesn't exist"
@@ -165,9 +170,9 @@ def destroy_user(current_user, user_id):
     if user:
         # Authorize role
         if current_user.id == user.id or current_user.role == Role.Student or current_user.role == Role.Instructor or user.role > current_user.role:
-            return 'Not allowed to delete user', 201
+            return 'Non autorisé à supprimer l\'utilisateur', 401
 
         db.session.delete(user)
         db.session.commit()
         return 'User deleted'
-    return f"User with id {user_id} doesn't exist"
+    return f"L'utilisateur avec l'identifiant {user_id} n'existe pas"

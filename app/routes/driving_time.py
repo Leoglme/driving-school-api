@@ -10,23 +10,15 @@ def update_driving_time(hours_remaining, user_id):
     driving_time = DrivingTime.query.filter_by(user_id=user_id).first()
 
     if driving_time:
-        old_remaining = driving_time.hours_total - driving_time.hours_done
-        new_total = driving_time.hours_total
-
-        if hours_remaining < driving_time.hours_total:
-            new_total = (new_total - old_remaining) - hours_remaining
-        else:
-            new_total = hours_remaining - (driving_time.hours_total - old_remaining)
-
         driving_time.user_id = user_id
-        driving_time.hours_total = new_total
+        driving_time.hours_total = hours_remaining + driving_time.hours_done
     else:
         driving_time = DrivingTime(hours_done=0, hours_total=hours_remaining, user_id=user_id)
     db.session.add(driving_time)
     db.session.commit()
 
 
-def add_driving_time(hours_done, user_id):
+def set_driving_time(hours_done, user_id):
     driving_time = DrivingTime.query.filter_by(user_id=user_id).first()
 
     if driving_time:
