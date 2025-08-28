@@ -1,0 +1,9 @@
+flask
+flask_sqlalchemy
+flask_cors
+flask_avatars
+flask_mail
+faker
+pyjwt
+pymysql
+python-dotenv

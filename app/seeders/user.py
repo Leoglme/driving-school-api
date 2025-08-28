@@ -18,6 +18,7 @@ from werkzeug.security import generate_password_hash
 from app.models.User import User
 from app.models.DrivingTime import DrivingTime
 from app.enums.role import Role
+
 fake = Faker()
 
 
@@ -27,6 +28,17 @@ fake = Faker()
 @click.option('--count', default=20, help='number of users to be generated')
 def add_users(count):
     with app.app_context():
+        # Add admin user with passwordNeedSet to False
+        with app.app_context():
+            user_admin_email = 'admin@driving-school.dibodev.fr'
+            user = User(email=user_admin_email, password=generate_password_hash("password"), first_name='Léo', last_name='Guillaume', role=Role.Admin,
+                        avatar=avatars.robohash(user_admin_email, size='80'), passwordNeedSet=False)
+            db.session.add(user)
+            db.session.commit()
+
+            db.session.commit()
+            print(user_admin_email)
+
         emails = [fake.unique.safe_email() for _ in range(count)]
         for i in range(0, count):
             email = emails[i]
@@ -50,7 +62,6 @@ def add_users(count):
 
                 db.session.commit()
                 print(email)
-
 
         return click.echo('{} users were added successfully to the database.'.format(count))
 

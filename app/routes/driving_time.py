@@ -1,12 +1,13 @@
-from .index import router
-from flask import request
-from .. import db
+from flask import request, Blueprint
 from ..enums.role import Role
 from ..middleware.auth_middleware import token_required
 from ..models.DrivingTime import DrivingTime
 
+router = Blueprint('driving_time', __name__)
+
 
 def update_driving_time(hours_remaining, user_id):
+    from .. import db
     driving_time = DrivingTime.query.filter_by(user_id=user_id).first()
 
     if driving_time:
@@ -19,6 +20,7 @@ def update_driving_time(hours_remaining, user_id):
 
 
 def set_driving_time(hours_done, user_id):
+    from .. import db
     driving_time = DrivingTime.query.filter_by(user_id=user_id).first()
 
     if driving_time:

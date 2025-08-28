@@ -1,26 +1,26 @@
-from flask import jsonify
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from .DrivingTime import DrivingTime
 from .. import db
 from ..enums.role import Role
 from ..services.serializer import Serializer
 
 
 class User(db.Model):
-    Serialize_only = ('id', 'email', 'first_name', 'first_name')
+    __tablename__ = 'users'
+    Serialize_only = ('id', 'email', 'first_name', 'last_name')
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), nullable=False, unique=True)
-    password = db.Column(db.String())
+    password = db.Column(db.String(255))
     first_name = db.Column(db.String(150))
     last_name = db.Column(db.String(150))
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     role = db.Column(db.Integer)
     avatar = db.Column(db.String(255))
-    passwordNeedSet = db.Column(db.Boolean(), default=True)
-    active = db.Column(db.Boolean(), default=True)
+    passwordNeedSet = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=True)
+
+    driving_time = db.relationship('DrivingTime', backref='user', uselist=False, lazy='select')
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -28,18 +28,16 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-    def serialize_list(self):
-        d = Serializer.serialize_list(self)
-        return d
+    @staticmethod
+    def serialize_list(users):
+        return [u.serialize() for u in users]
 
     def serialize(self):
         d = Serializer.serialize(self)
-        driving_time = DrivingTime.query.filter_by(user_id=d['id']).first()
-
-        if driving_time:
-            d['driving_time'] = DrivingTime.serialize(driving_time)
+        if self.driving_time:
+            d['driving_time'] = self.driving_time.serialize()
         else:
-            d['driving_time'] = DrivingTime(hours_done=0, hours_total=0).serialize()
+            d['driving_time'] = {'hours_done': 0, 'hours_total': 0, 'hours_remaining': 0}
 
         d['driving_time']['hours_remaining'] = d['driving_time']['hours_total'] - d['driving_time']['hours_done']
         d['role'] = {

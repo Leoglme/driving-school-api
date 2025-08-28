@@ -4,23 +4,11 @@ This app make with vue 3 and flask.
 
 ## How To Run
 
-1. Install `flask`:
-
+1. Install dependencies:
 ```
-$ pip install flask
+$ pip install -r requirements.txt
 ```
-
-2. Install `flask-login`:
-
-```
-$ pip install flask-login
-```
-3. Install `flask-sqlalchemy`:
-
-```
-$ pip install flask-sqlalchemy
-```
-4. Start app:
+2. Start app:
 
 ```
 $ py main.py

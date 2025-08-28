@@ -5,5 +5,58 @@ services:
     logging:
       driver: 'none'  # disable saving logs
     ports:
-      - 1025:1025 # smtp server
-      - 8025:8025 # web ui
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - app-network
+
+  db_mariadb:
+    container_name: driving_school_db_mariadb
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - database_data:/var/lib/mysql
+    networks:
+      - app-network
+
+  phpmyadmin:
+    container_name: driving_school_phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db_mariadb
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - '7500:80'
+    networks:
+      - app-network
+
+  init_db:
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "apt-get update && apt-get install -y netcat-openbsd && ./scripts/wait-for-mariadb.sh db_mariadb 3306 30 && pip install -r requirements.txt && python scripts/init_db.py"
+    depends_on:
+      - db_mariadb
+    environment:
+      - DB_HOST=db_mariadb
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  database_data:
+  app:

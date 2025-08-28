@@ -1,9 +1,7 @@
 from sqlalchemy import desc
 
 from .driving_time import set_driving_time
-from .index import router
-from flask import request
-from .. import db
+from flask import request, Blueprint
 from ..enums.role import Role
 from ..middleware.auth_middleware import token_required
 from ..models.Meet import Meet
@@ -11,6 +9,9 @@ from ..models.DrivingTime import DrivingTime
 from ..models.User import User
 from flask import jsonify
 from datetime import datetime
+
+
+router = Blueprint('meet', __name__)
 
 
 def update_meet_driving_time(user, chef, between_hours):
@@ -34,6 +35,7 @@ def update_meet_driving_time(user, chef, between_hours):
 @router.route('/meet', methods=['POST'])
 @token_required
 def store_meet(current_user):
+    from .. import db
     # Authorize role
     if current_user.role == Role.Student:
         return 'Non autorisé à créer un rendez-vous', 401
@@ -97,6 +99,7 @@ def meets_by_user_id(current_user, user_id):
 @router.route('/meet/<int:meet_id>', methods=['PUT'])
 @token_required
 def update_meet(current_user, meet_id):
+    from .. import db
     # Authorize role
     if current_user.role == Role.Student:
         return 'Non autorisé à créer un rendez-vous', 401
@@ -140,6 +143,7 @@ def update_meet(current_user, meet_id):
 @router.route('/meet/<int:meet_id>', methods=['DELETE'])
 @token_required
 def destroy_meet(current_user, meet_id):
+    from .. import db
     # Authorize role
     if current_user.role == Role.Student:
         return 'Non autorisé à créer un rendez-vous', 401

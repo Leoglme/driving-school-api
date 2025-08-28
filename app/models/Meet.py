@@ -1,5 +1,3 @@
-from flask import jsonify
-
 from .User import User
 from .. import db
 from ..services.serializer import Serializer
@@ -13,8 +11,8 @@ class Meet(db.Model):
     end = db.Column(db.DateTime(timezone=True), default=func.now())
     all_day = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
-    chef = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.Column(db.Integer, db.ForeignKey('user.id'))
+    chef = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def serialize_list(self):
         d = Serializer.serialize_list(self)

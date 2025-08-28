@@ -1,7 +1,9 @@
-from .index import router
 from ..enums.role import Role
-from flask import jsonify
+from flask import jsonify, Blueprint
 from ..middleware.auth_middleware import token_required
+
+router = Blueprint('role', __name__)
+
 
 # Get all roles
 @router.route('/roles', methods=['GET'])
