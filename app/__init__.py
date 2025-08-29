@@ -2,7 +2,6 @@ from flask import Flask, jsonify
 
 from .routes.index import router
 from flask_sqlalchemy import SQLAlchemy
-from os import path
 from flask_cors import CORS
 from flask_avatars import Avatars
 from dotenv import load_dotenv
@@ -10,6 +9,7 @@ from pathlib import Path
 import os
 import logging
 from flask_mail import Mail
+from urllib.parse import quote_plus
 
 avatars = Avatars()
 # Init the database
@@ -54,17 +54,21 @@ def create_app():
 
     # Database config
     DB_ENGINE = os.getenv("DB_ENGINE", "sqlite")
+
     if DB_ENGINE == "sqlite":
         DB_NAME = os.getenv("DB_NAME", "driving-school.db")
-        app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
+        app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_NAME}"
     else:
         DB_USER = os.getenv("DB_USER", "root")
         DB_PASSWORD = os.getenv("DB_PASSWORD", "root")
         DB_HOST = os.getenv("DB_HOST", "localhost")
         DB_PORT = os.getenv("DB_PORT", "3306")
         DB_NAME = os.getenv("DB_NAME", "driving_school")
-        app.config['SQLALCHEMY_DATABASE_URI'] = (
-            f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+        DB_PASSWORD_Q = quote_plus(DB_PASSWORD)  # encode @, :, /, %, & ...
+
+        app.config["SQLALCHEMY_DATABASE_URI"] = (
+            f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD_Q}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
         )
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
