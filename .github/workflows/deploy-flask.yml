@@ -24,21 +24,30 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: 🛠️ Generate .env from .env.example
+      - name: 🛠️ Generate .env file
         run: |
-          cp .env.example .env
-          sed -i "s/SECRET_KEY=.*/SECRET_KEY='${{ secrets.SECRET_KEY }}'/" .env
-          sed -i "s/DB_PASSWORD=.*/DB_PASSWORD='${{ secrets.DB_PASSWORD }}'/" .env
-          sed -i "s/DB_USER=.*/DB_USER='${{ secrets.DB_USER }}'/" .env
-          sed -i "s/DB_HOST=.*/DB_HOST='${{ secrets.DB_HOST }}'/" .env
-          sed -i "s/DB_PORT=.*/DB_PORT=${{ secrets.DB_PORT }}/" .env
-          sed -i "s/DB_NAME=.*/DB_NAME=${{ secrets.DB_NAME }}/" .env
-          sed -i "s/MAIL_SERVER=.*/MAIL_SERVER='${{ secrets.MAIL_SERVER }}'/" .env
-          sed -i "s/MAIL_PORT=.*/MAIL_PORT=${{ secrets.MAIL_PORT }}/" .env
-          sed -i "s/MAIL_USE_TLS=.*/MAIL_USE_TLS=True/" .env
-          sed -i "s/MAIL_USERNAME=.*/MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}'/" .env
-          sed -i "s/MAIL_PASSWORD=.*/MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}'/" .env
-          sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=https://driving-school.dibodev.fr|" .env
+          cat > .env <<EOF
+          # Flask
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+
+          # Database
+          DB_ENGINE=mysql+pymysql
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+
+          # Mail
+          MAIL_SERVER=${{ secrets.MAIL_SERVER }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_USE_TLS=True
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+
+          # Frontend
+          FRONTEND_URL=https://driving-school.dibodev.fr
+          EOF
 
       - name: 📤 Upload API sources and .env (SCP)
         uses: appleboy/scp-action@master
