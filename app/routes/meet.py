@@ -65,7 +65,11 @@ def store_meet(current_user):
 
     meet = Meet(title=title, start=start, end=end, all_day=all_day, chef=chef_id, user=user_id)
     db.session.add(meet)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
     return 'Meet created', 201
 
 
@@ -134,7 +138,11 @@ def update_meet(current_user, meet_id):
         meet.chef = payload['chef']
         meet.user = payload['user']
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return 'Meet Updated'
     return f"Meet with id {meet_id} doesn't exist"
 
@@ -167,6 +175,10 @@ def destroy_meet(current_user, meet_id):
             return str(e), 500
 
         db.session.delete(meet)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return 'Meet deleted'
     return f"Meet with id {meet_id} doesn't exist"

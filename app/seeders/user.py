@@ -34,9 +34,11 @@ def add_users(count):
             user = User(email=user_admin_email, password=generate_password_hash("password"), first_name='Léo', last_name='Guillaume', role=Role.Admin,
                         avatar=avatars.robohash(user_admin_email, size='80'), passwordNeedSet=False)
             db.session.add(user)
-            db.session.commit()
-
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise
             print(user_admin_email)
 
         emails = [fake.unique.safe_email() for _ in range(count)]
@@ -55,12 +57,20 @@ def add_users(count):
                 user = User(email=email, password=password, first_name=first_name, last_name=last_name, role=user_role,
                             avatar=avatar)
                 db.session.add(user)
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    raise
                 if user.role == Role.Student:
                     driving_time = DrivingTime(hours_done=hours_done, hours_total=hours_total, user_id=user.id)
                     db.session.add(driving_time)
 
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    raise
                 print(email)
 
         return click.echo('{} users were added successfully to the database.'.format(count))

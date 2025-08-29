@@ -103,7 +103,11 @@ def add_meets(count):
             # Passer à la semaine suivante
             current_week_start += timedelta(days=7)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return click.echo(f"{meets_added} rendez-vous ont été ajoutés avec succès à la base de données.")
 
 

@@ -19,6 +19,10 @@ router = Blueprint('auth', __name__)
 @router.route('/login', methods=['POST'])
 def login():
     try:
+        db.session.rollback()
+    except Exception:
+        pass
+    try:
         current_app.logger.info("Début de la route /login")
         auth = request.get_json()
         current_app.logger.info(f"Données reçues : {auth}")
@@ -45,7 +49,11 @@ def login():
             if old_token:
                 current_app.logger.info(f"Suppression de l'ancien token pour l'utilisateur : {user.id}")
                 db.session.delete(old_token)
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    raise
 
             # Create and add New Token
             current_app.logger.info(f"Génération d'un nouveau token pour l'utilisateur : {user.id}")
@@ -60,7 +68,11 @@ def login():
 
             token_obj = Token(token=token, user_id=user.id)
             db.session.add(token_obj)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise
             current_app.logger.info(f"Nouveau token ajouté à la base pour l'utilisateur : {user.id}")
 
             return make_response(jsonify({
@@ -140,7 +152,11 @@ def create_password(current_user):
         from .. import db
         current_user.passwordNeedSet = False
         current_user.set_password(password)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         current_app.logger.info(f"Mot de passe mis à jour pour l'utilisateur : {current_user.email}")
 
         return make_response(jsonify({'user': current_user.serialize()}), 201)
@@ -166,6 +182,10 @@ def reset_password(token):
                              {'WWW-Authenticate': 'Basic-realm= "Unauthorized!"'})
 
     user.set_password(password)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
     return make_response('', 204)

@@ -1,5 +1,5 @@
-from flask import Flask, jsonify
-
+from flask import Flask, jsonify, current_app
+from werkzeug.exceptions import HTTPException
 from .routes.index import router
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -73,6 +73,11 @@ def create_app():
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+    app.config.setdefault("SQLALCHEMY_ENGINE_OPTIONS", {
+        "pool_pre_ping": True,  # évite connexions mortes
+        "pool_recycle": 280,  # recycle avant timeout MySQL
+    })
     # Mail config
     app.config['MAIL_SERVER'] = os.getenv("MAIL_SERVER", "localhost")
     app.config['MAIL_PORT'] = int(os.getenv("MAIL_PORT", 1025))
@@ -96,6 +101,32 @@ def create_app():
     app.register_blueprint(meet.router)
     app.register_blueprint(role.router)
     app.register_blueprint(driving_time.router)
+
+    # --- ROLLBACK/REMOVE AUTOMATIQUES ---
+    @app.teardown_request
+    def teardown_request(exc):
+        # si une erreur s'est produite dans la requête, rollback
+        if exc is not None:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+        # toujours nettoyer la session
+        db.session.remove()
+
+    # --- HANDLERS D'ERREURS PROPRES ---
+    @app.errorhandler(HTTPException)
+    def handle_http_error(e: HTTPException):
+        return jsonify(error=e.description), e.code
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(e: Exception):
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        current_app.logger.exception("Erreur non gérée")
+        return jsonify(error="Erreur interne du serveur"), 500
 
     return app
 

@@ -22,7 +22,11 @@ def add_roles():
         with app.app_context():
             role = Role(name=role)
             db.session.add(role)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise
 
     return click.echo('roles were added successfully to the database.')
 

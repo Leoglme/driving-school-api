@@ -16,7 +16,11 @@ def update_driving_time(hours_remaining, user_id):
     else:
         driving_time = DrivingTime(hours_done=0, hours_total=hours_remaining, user_id=user_id)
     db.session.add(driving_time)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def set_driving_time(hours_done, user_id):
@@ -27,7 +31,11 @@ def set_driving_time(hours_done, user_id):
         driving_time.user_id = user_id
         driving_time.hours_done = driving_time.hours_done + hours_done
         db.session.add(driving_time)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 # UPDATE driving time

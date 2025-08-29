@@ -42,7 +42,11 @@ def store_user(current_user):
     user = User(email=email, first_name=first_name, last_name=last_name, role=role, avatar=avatar)
     User.set_password(user, password)
     db.session.add(user)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
     # Ajouter le temps de conduite
     update_driving_time(hours_remaining, user.id)
@@ -199,7 +203,11 @@ def update_user(current_user, user_id):
             # Add driving time to user
             update_driving_time(int(payload['hours_remaining']), user.id)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return 'User Updated'
     return f"User with id {user_id} doesn't exist"
 
@@ -226,6 +234,10 @@ def destroy_user(current_user, user_id):
             return 'Non autorisé à supprimer l\'utilisateur', 401
 
         user.active = False
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return 'User deleted'
     return f"L'utilisateur avec l'identifiant {user_id} n'existe pas"

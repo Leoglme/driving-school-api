@@ -7,3 +7,4 @@ faker
 pyjwt
 pymysql
 python-dotenv
+werkzeug
