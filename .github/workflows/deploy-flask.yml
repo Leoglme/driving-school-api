@@ -1,0 +1,115 @@
+name: 🚀 Deploy Flask API to VPS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: flask-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: 🏗️ Deploy Flask API
+    runs-on: ubuntu-latest
+    env:
+      APP_DIR: /var/www/api.driving-school.dibodev.fr
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 1
+
+      - name: 📤 Upload API sources and .env (SCP)
+        uses: appleboy/scp-action@main
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: ${{ env.APP_DIR }}/html
+
+      - name: 🐍 Setup Python and virtual environment (SSH)
+        uses: appleboy/ssh-action@main
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            TARGET_DIR="${{ env.APP_DIR }}/html"
+            cd "$TARGET_DIR"
+            sudo apt-get update -y --allow-releaseinfo-change || true
+            sudo apt-get install -y python3-venv python3-pip
+            if [ ! -x ".venv/bin/python" ]; then
+              python3 -m venv .venv
+            fi
+            . .venv/bin/activate
+            python -m pip install --upgrade pip wheel
+            pip install -r requirements.txt --no-cache-dir
+            deactivate
+
+      - name: 🗃️ Run database migrations and seeders (SSH)
+        uses: appleboy/ssh-action@main
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            TARGET_DIR="${{ env.APP_DIR }}/html"
+            cd "$TARGET_DIR"
+            . .venv/bin/activate
+            python scripts/init_db.py
+            deactivate
+
+      - name: ⚙️ Configure/restart Gunicorn service (SSH)
+        uses: appleboy/ssh-action@main
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            TARGET_DIR="${{ env.APP_DIR }}/html"
+            SERVICE_NAME="flask-api.service"
+            DEPLOY_USER="${{ secrets.SSH_USERNAME }}"
+            sudo bash -c "cat > /etc/systemd/system/${SERVICE_NAME}" <<EOF
+            [Unit]
+            Description=Flask API (Gunicorn)
+            After=network.target
+            [Service]
+            User=${DEPLOY_USER}
+            WorkingDirectory=${TARGET_DIR}
+            Environment=PYTHONPATH=${TARGET_DIR}
+            ExecStart=${TARGET_DIR}/.venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 main:app
+            Restart=always
+            RestartSec=5
+            KillSignal=SIGINT
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+            sudo systemctl daemon-reload
+            sudo systemctl enable ${SERVICE_NAME}
+            sudo systemctl restart ${SERVICE_NAME}
+            sudo systemctl --no-pager --full status ${SERVICE_NAME} || true
+
+      - name: 🔄 Test & reload Nginx (SSH)
+        uses: appleboy/ssh-action@main
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            sudo nginx -t
+            sudo systemctl reload nginx
