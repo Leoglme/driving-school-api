@@ -87,9 +87,10 @@ def create_app():
     from .models import User, Role, Meet, Token, DrivingTime
 
     # Import routes
-    from .routes import user, auth, meet, role, driving_time
+    from .routes import user, auth, meet, role, driving_time, index
 
     # Enregistrement des blueprints après que toutes les routes sont définies
+    app.register_blueprint(index.router)
     app.register_blueprint(auth.router)
     app.register_blueprint(user.router)
     app.register_blueprint(meet.router)
